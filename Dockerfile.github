@@ -1,13 +1,22 @@
 FROM ghcr.io/actions/actions-runner:latest
-# for latest release, see https://github.com/actions/runner/releases
+# Base image for GitHub Actions self-hosted runner (Ubuntu-based)
 
 USER root
 
-# install curl and jq
-RUN apt-get update && apt-get install -y curl jq && \
-    apt-get clean && \
+# 1) Install basic dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        jq \
+        ca-certificates \
+        gnupg \
+        lsb-release && \
     rm -rf /var/lib/apt/lists/*
 
+# 2) Install Azure CLI (official Microsoft installation script)
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# 3) Copy entrypoint script
 COPY github-actions-runner/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
