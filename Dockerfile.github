@@ -3,20 +3,35 @@ FROM ghcr.io/actions/actions-runner:latest
 
 USER root
 
-# 1) Install basic dependencies
+# 1) Install base dependencies and common CLI tools
 RUN apt-get update && \
     apt-get install -y \
+        apt-utils \
         curl \
         jq \
         ca-certificates \
         gnupg \
-        lsb-release && \
+        lsb-release \
+        zip \
+        unzip \
+        git && \
     rm -rf /var/lib/apt/lists/*
 
 # 2) Install Azure CLI (official Microsoft installation script)
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
-# 3) Copy entrypoint script
+# 3) Install GitHub CLI (official installation method)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+        dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
+        https://cli.github.com/packages stable main" | \
+        tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y gh && \
+    rm -rf /var/lib/apt/lists/*
+
+# 4) Copy entrypoint script
 COPY github-actions-runner/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
